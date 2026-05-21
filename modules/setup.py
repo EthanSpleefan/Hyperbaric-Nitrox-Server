@@ -32,6 +32,35 @@ def _run(cmd, check=True, **kwargs):
     return subprocess.run(cmd, check=check, **kwargs)
 
 
+def _steam_login_banner():
+    console.print(
+        "\n[bold yellow]"
+        "╔══════════════════════════════════════════════════╗\n"
+        "║  STEAM LOGIN REQUIRED                            ║\n"
+        "║                                                  ║\n"
+        "║  SteamCMD will now prompt for your Steam         ║\n"
+        "║  username. Enter it, then your password, and     ║\n"
+        "║  any Steam Guard code when asked.                ║\n"
+        "║                                                  ║\n"
+        "║  The account must own Subnautica (App 264710).   ║\n"
+        "╚══════════════════════════════════════════════════╝"
+        "[/bold yellow]\n"
+    )
+
+
+def _steamcmd_install(install_dir):
+    _steam_login_banner()
+    steam_user = click.prompt("Steam username")
+    _run([
+        STEAMCMD,
+        "+force_install_dir", install_dir,
+        "+@sSteamCmdForcePlatformType", "linux",
+        "+login", steam_user,
+        "+app_update", "264710", "validate",
+        "+quit",
+    ])
+
+
 def run_setup():
     # Step 1: Must be root
     if os.geteuid() != 0:
@@ -82,36 +111,34 @@ def run_setup():
     _run(["apt-get", "install", "-y", "steamcmd"])
     _ok("SteamCMD installed")
 
-    # Step 5: Subnautica game files
-    subnautica_path = Path(SUBNAUTICA_DIR)
-    subnautica_path.mkdir(parents=True, exist_ok=True)
-    sentinel = subnautica_path / "Subnautica.exe"
-    if sentinel.exists():
-        _warn(f"Subnautica already present at {SUBNAUTICA_DIR}; skipping download.")
+    # Step 5: Subnautica game files (auto-detect existing installs)
+    from modules.detect import detect_subnautica, detect_nitrox_saves
+
+    _step("Auto-detecting Subnautica game files…")
+    found = detect_subnautica(SUBNAUTICA_DIR)
+    subnautica_dir = SUBNAUTICA_DIR
+    if found:
+        subnautica_dir = str(found[0])
+        _ok(f"Detected Subnautica install at {subnautica_dir}")
+        for extra in found[1:]:
+            _warn(f"Also found: {extra} (ignored)")
+        choice = click.prompt(
+            "Check for update (recommended) or skip?",
+            type=click.Choice(["update", "skip"], case_sensitive=False),
+            default="update",
+            show_choices=True,
+        ).lower()
+        if choice == "update":
+            _step("Validating / updating Subnautica via SteamCMD…")
+            _steamcmd_install(subnautica_dir)
+            _ok("Subnautica updated / validated")
+        else:
+            _warn("Skipping update; using existing game files as-is.")
     else:
+        _warn("No existing Subnautica install detected.")
+        Path(SUBNAUTICA_DIR).mkdir(parents=True, exist_ok=True)
         _step("Downloading Subnautica game files via SteamCMD…")
-        console.print(
-            "\n[bold yellow]"
-            "╔══════════════════════════════════════════════════╗\n"
-            "║  STEAM LOGIN REQUIRED                            ║\n"
-            "║                                                  ║\n"
-            "║  SteamCMD will now prompt for your Steam         ║\n"
-            "║  username. Enter it, then your password, and     ║\n"
-            "║  any Steam Guard code when asked.                ║\n"
-            "║                                                  ║\n"
-            "║  The account must own Subnautica (App 264710).   ║\n"
-            "╚══════════════════════════════════════════════════╝"
-            "[/bold yellow]\n"
-        )
-        steam_user = click.prompt("Steam username")
-        _run([
-            STEAMCMD,
-            "+force_install_dir", SUBNAUTICA_DIR,
-            "+@sSteamCmdForcePlatformType", "linux",
-            "+login", steam_user,
-            "+app_update", "264710", "validate",
-            "+quit",
-        ])
+        _steamcmd_install(SUBNAUTICA_DIR)
         _ok("Subnautica download complete")
 
     # Step 6: Download latest Nitrox server + create system user
@@ -157,8 +184,21 @@ def run_setup():
         _ok("Nitrox server downloaded and extracted")
 
     _run(["chown", "-R", "nitrox:nitrox", NITROX_DIR])
-    _run(["chown", "-R", "nitrox:nitrox", SUBNAUTICA_DIR], check=False)
+    _run(["chown", "-R", "nitrox:nitrox", subnautica_dir], check=False)
     _ok("Ownership set to nitrox user")
+
+    # Detect existing Nitrox save files
+    _step("Scanning for existing Nitrox save files…")
+    saves = detect_nitrox_saves()
+    if saves:
+        _ok(f"Found {len(saves)} existing Nitrox save(s):")
+        for name, path in saves:
+            console.print(f"    [cyan]{name}[/cyan]  ({path})")
+        console.print(
+            "[dim]Existing saves are preserved; the server reuses them on start.[/dim]"
+        )
+    else:
+        _warn("No existing Nitrox saves found — a new world is created on first start.")
 
     # Step 7: WireGuard server keys
     _step("Generating WireGuard server keys…")
@@ -219,7 +259,7 @@ def run_setup():
         "User=nitrox\n"
         "WorkingDirectory=/opt/nitrox\n"
         "ExecStart=/opt/nitrox/Nitrox.Server.Subnautica"
-        " --subnautica-path /opt/subnautica\n"
+        f" --subnautica-path {subnautica_dir}\n"
         "Restart=on-failure\n"
         "RestartSec=10\n"
         "\n"

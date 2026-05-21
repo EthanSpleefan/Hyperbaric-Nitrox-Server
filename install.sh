@@ -13,6 +13,7 @@ echo "==> Making cli.py executable…"
 chmod +x "$SCRIPT_DIR/cli.py"
 
 echo "==> Creating wrapper at /usr/local/bin/nitrox…"
+sudo rm -f /usr/local/bin/nitrox
 sudo tee /usr/local/bin/nitrox >/dev/null <<EOF
 #!/usr/bin/env bash
 exec "$SCRIPT_DIR/.venv/bin/python3" "$SCRIPT_DIR/cli.py" "\$@"

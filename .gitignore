@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+configs/*.conf
+data/peers.json
+data/.peers.lock

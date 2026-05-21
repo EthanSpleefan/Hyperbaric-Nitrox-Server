@@ -43,7 +43,7 @@ sudo bash install.sh
 ```bash
 sudo nitrox setup        # Full server provisioning (idempotent)
 sudo systemctl start nitrox
-sudo nitrox peer add hamish
+sudo nitrox peer add friend1
 nitrox web               # Start web UI for config distribution
 ```
 
@@ -74,7 +74,7 @@ sudo nitrox setup
 
 ### `nitrox peer add <name>`
 
-Adds a new WireGuard peer. `<name>` must be lowercase alphanumeric (e.g. `hamish`).
+Adds a new WireGuard peer. `<name>` must be lowercase alphanumeric (e.g. `friend1`).
 
 - Assigns the next available IP in `10.8.0.0/24` (starting from `10.8.0.2`)
 - Generates a WireGuard keypair
@@ -83,8 +83,8 @@ Adds a new WireGuard peer. `<name>` must be lowercase alphanumeric (e.g. `hamish
 - Saves the peer record to `data/peers.json`
 
 ```bash
-sudo nitrox peer add hamish
-sudo nitrox peer add rupert
+sudo nitrox peer add friend1
+sudo nitrox peer add friend2
 ```
 
 ---
@@ -98,7 +98,7 @@ Removes a peer (prompts for confirmation).
 - Removes the entry from `data/peers.json`
 
 ```bash
-sudo nitrox peer remove hamish
+sudo nitrox peer remove friend1
 ```
 
 ---
@@ -111,8 +111,8 @@ Prints a formatted table of all peers with live handshake status (fetched from `
 ┌──────────┬────────────┬─────────────────┬────────────┬──────────────┐
 │ Name     │ VPN IP     │ Public Key       │ Added      │ Last Handshake│
 ├──────────┼────────────┼─────────────────┼────────────┼──────────────┤
-│ hamish   │ 10.8.0.2   │ abc123xyz…ef12  │ 2026-05-20 │ 2m ago       │
-│ rupert   │ 10.8.0.3   │ def456uvw…gh34  │ 2026-05-20 │ never        │
+│ friend1   │ 10.8.0.2   │ abc123xyz…ef12  │ 2026-05-20 │ 2m ago       │
+│ friend2   │ 10.8.0.3   │ def456uvw…gh34  │ 2026-05-20 │ never        │
 └──────────┴────────────┴─────────────────┴────────────┴──────────────┘
 ```
 
@@ -127,7 +127,7 @@ nitrox peer list
 Prints a QR code for the peer's WireGuard config to the terminal, ready to scan with the WireGuard mobile app.
 
 ```bash
-nitrox peer qr hamish
+nitrox peer qr friend1
 ```
 
 ---
@@ -173,7 +173,7 @@ Friends need a WireGuard config to connect. Two options:
 **Option B — QR code**
 
 ```bash
-nitrox peer qr hamish
+nitrox peer qr friend1
 ```
 
 Show your friend the terminal QR code to scan directly with the WireGuard mobile app.
@@ -181,7 +181,7 @@ Show your friend the terminal QR code to scan directly with the WireGuard mobile
 **Option C — File transfer**
 
 ```bash
-scp configs/hamish.conf hamish@192.168.1.x:~/hamish.conf
+scp configs/friend1.conf friend1@192.168.1.x:~/friend1.conf
 ```
 
 ---

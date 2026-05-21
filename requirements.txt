@@ -1,5 +1,5 @@
 click
 rich
 flask
-qrcode[terminal]
+qrcode
 requests

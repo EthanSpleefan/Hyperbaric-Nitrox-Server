@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+apt install pip
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "==> Installing Python dependencies…"

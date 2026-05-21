@@ -2,16 +2,19 @@
 set -euo pipefail
 
 apt install pip
+sudo apt install -y python3-venv python3-full
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 echo "==> Installing Python dependencies…"
-pip install -r "$SCRIPT_DIR/requirements.txt" --break-system-packages
+python3 -m venv "$SCRIPT_DIR/.venv"
+"$SCRIPT_DIR/.venv/bin/pip" install -r "$SCRIPT_DIR/requirements.txt"
 
 echo "==> Making cli.py executable…"
 chmod +x "$SCRIPT_DIR/cli.py"
 
 echo "==> Creating symlink at /usr/local/bin/nitrox…"
+ln -sf "$SCRIPT_DIR/.venv/bin/python3" /usr/local/bin/nitrox-python
 ln -sf "$SCRIPT_DIR/cli.py" /usr/local/bin/nitrox
 
 echo "==> Creating data/ and configs/ directories…"

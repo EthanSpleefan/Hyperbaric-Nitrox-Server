@@ -242,12 +242,18 @@ def run_setup():
     else:
         _ok("WireGuard config already exists")
 
-    # Step 9: Enable WireGuard
+    # Step 9: WireGuard endpoint for peer configs
+    from modules.endpoint import prompt_wireguard_endpoint
+
+    _step("WireGuard endpoint for peer configs…")
+    wg_endpoint = prompt_wireguard_endpoint()
+
+    # Step 10: Enable WireGuard
     _step("Enabling and starting WireGuard (wg-quick@wg0)…")
     _run(["systemctl", "enable", "--now", "wg-quick@wg0"])
     _ok("WireGuard enabled and started")
 
-    # Step 10: Nitrox systemd service
+    # Step 11: Nitrox systemd service
     _step("Writing Nitrox systemd service file…")
     service_path = Path(SYSTEMD_DIR) / "nitrox.service"
     service_content = (
@@ -269,14 +275,13 @@ def run_setup():
     _atomic_write(service_path, service_content)
     _ok("Nitrox service file written")
 
-    # Step 11: Reload systemd and enable nitrox
+    # Step 12: Reload systemd and enable nitrox
     _step("Enabling Nitrox service…")
     _run(["systemctl", "daemon-reload"])
     _run(["systemctl", "enable", "nitrox"])
     _ok("Nitrox service enabled (not started — run: systemctl start nitrox)")
 
     # Summary
-    public_ip = _get_public_ip()
     wg_status = subprocess.run(
         ["systemctl", "is-active", "wg-quick@wg0"],
         capture_output=True, text=True
@@ -291,7 +296,7 @@ def run_setup():
     )
     console.print(f"  [cyan]WireGuard status:[/cyan] {wg_status}")
     console.print(f"  [cyan]Server public key:[/cyan] {server_pub}")
-    console.print(f"  [cyan]Public IP:[/cyan]         {public_ip}")
+    console.print(f"  [cyan]WireGuard endpoint:[/cyan] {wg_endpoint}:51820")
     console.print("\n[bold]Next steps:[/bold]")
     console.print("  Start the game server:  [green]systemctl start nitrox[/green]")
     console.print("  Add VPN peers:          [green]nitrox peer add <name>[/green]")
@@ -315,12 +320,3 @@ def _atomic_write(path: Path, content: str, mode: int = 0o644):
         os.umask(saved_umask)
 
 
-def _get_public_ip() -> str:
-    try:
-        result = subprocess.run(
-            ["curl", "-s", "--max-time", "5", "ifconfig.me"],
-            capture_output=True, text=True
-        )
-        return result.stdout.strip() or "unknown"
-    except Exception:
-        return "unknown"

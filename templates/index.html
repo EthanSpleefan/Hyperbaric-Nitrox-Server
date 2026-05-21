@@ -3,233 +3,475 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Nitrox — Peer Config Distribution</title>
+  <title>Nitrox — Server Console</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:       #0d0f0e;
-      --surface:  #141817;
-      --border:   #1f2421;
-      --text:     #c8d6c4;
-      --muted:    #5a6e5a;
-      --green:    #4ade80;
-      --green-dim:#1a3a24;
-      --accent:   #22c55e;
-      --warn:     #facc15;
-      --warn-bg:  #1a1500;
-      --mono:     "JetBrains Mono", "Fira Mono", "Cascadia Code", ui-monospace, monospace;
+      --bg:        #0b1114;
+      --surface:   #121a1f;
+      --surface-2: #182229;
+      --border:    #243038;
+      --text:      #d4dde3;
+      --muted:     #7a8f9a;
+      --heading:   #eef4f7;
+      --teal:      #3d9a9a;
+      --teal-dim:  #1e4a4a;
+      --amber:     #c9a227;
+      --amber-bg:  #1a1608;
+      --ok:        #5cb88a;
+      --ok-bg:     #122018;
+      --off:       #6b7c85;
+      --off-bg:    #151c22;
+      --danger:    #d45c5c;
+      --mono:      "IBM Plex Mono", "SF Mono", "Consolas", ui-monospace, monospace;
+      --sans:      "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --radius:    6px;
     }
 
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: var(--mono);
-      font-size: 14px;
-      line-height: 1.6;
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.55;
       min-height: 100vh;
     }
 
+    .wrap {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px 56px;
+    }
+
     header {
+      padding: 28px 0 20px;
       border-bottom: 1px solid var(--border);
-      padding: 20px 32px;
+      margin-bottom: 28px;
+    }
+
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      color: var(--heading);
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 0.875rem;
+    }
+
+    .banner {
+      padding: 12px 14px;
+      background: var(--amber-bg);
+      border: 1px solid #3d3520;
+      border-radius: var(--radius);
+      color: var(--amber);
+      font-size: 0.8125rem;
+      margin-bottom: 28px;
+    }
+
+    .banner strong { font-weight: 600; }
+
+    section { margin-bottom: 36px; }
+
+    .section-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* Status panel */
+    .status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 560px) {
+      .status-grid { grid-template-columns: 1fr; }
+    }
+
+    .status-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+
+    .status-card h3 {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .status-row {
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
-    header .logo {
-      font-size: 18px;
-      font-weight: 700;
-      color: var(--accent);
-      letter-spacing: 0.05em;
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: var(--mono);
     }
 
-    header .subtitle {
+    .pill.on  { background: var(--ok-bg);  color: var(--ok);  border: 1px solid #2a4a38; }
+    .pill.off { background: var(--off-bg); color: var(--off); border: 1px solid var(--border); }
+
+    .pill::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-meta {
+      margin-top: 10px;
+      font-size: 0.8125rem;
       color: var(--muted);
-      font-size: 12px;
+      font-family: var(--mono);
     }
 
-    .notice {
-      margin: 24px 32px;
-      padding: 12px 16px;
-      background: var(--warn-bg);
-      border: 1px solid var(--warn);
-      border-left: 4px solid var(--warn);
-      color: var(--warn);
-      font-size: 13px;
+    .status-meta span { color: var(--text); }
+
+    .controls {
+      margin-top: 14px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
     }
 
-    .notice strong { color: var(--warn); }
+    button {
+      font-family: var(--sans);
+      font-size: 0.8125rem;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
 
-    main { padding: 0 32px 48px; }
+    button:hover:not(:disabled) {
+      background: var(--teal-dim);
+      border-color: var(--teal);
+      color: var(--heading);
+    }
 
-    h2 {
-      font-size: 13px;
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    button.primary {
+      background: var(--teal-dim);
+      border-color: var(--teal);
+      color: #a8e0e0;
+    }
+
+    button.danger:hover:not(:disabled) {
+      background: #2a1515;
+      border-color: var(--danger);
+      color: #f0b0b0;
+    }
+
+    .control-msg {
+      margin-top: 10px;
+      font-size: 0.8125rem;
+      min-height: 1.2em;
+    }
+
+    .control-msg.err { color: var(--danger); }
+    .control-msg.ok  { color: var(--ok); }
+
+    /* Instructions */
+    .steps {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px 16px 36px;
+      font-size: 0.875rem;
+    }
+
+    .steps li { margin-bottom: 6px; }
+    .steps li:last-child { margin-bottom: 0; }
+
+    .steps code {
+      font-family: var(--mono);
+      font-size: 0.8125rem;
+      color: var(--teal);
+      background: var(--bg);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+
+    /* Peers */
+    .peer-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .count {
+      font-size: 0.75rem;
       color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 16px;
+      font-family: var(--mono);
     }
 
-    .peer-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 16px;
+    .peer-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .peer-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      padding: 20px;
-      transition: border-color 0.15s;
-    }
-
-    .peer-card:hover { border-color: var(--green-dim); }
-
-    .peer-name {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--green);
-      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      gap: 8px;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
     }
 
-    .peer-name::before {
-      content: "●";
-      font-size: 8px;
-      color: var(--accent);
-    }
+    .peer-card:hover { border-color: #2f424c; }
 
-    .peer-meta {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.8;
-    }
-
-    .peer-meta span { color: var(--text); }
-
-    .btn-download {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 8px 16px;
-      background: var(--green-dim);
-      color: var(--green);
-      border: 1px solid var(--accent);
-      text-decoration: none;
-      font-family: var(--mono);
-      font-size: 12px;
+    .peer-id {
       font-weight: 600;
-      letter-spacing: 0.05em;
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
+      color: var(--heading);
+      font-size: 0.9375rem;
     }
 
-    .btn-download:hover {
-      background: var(--accent);
-      color: var(--bg);
+    .peer-detail {
+      font-size: 0.8125rem;
+      color: var(--muted);
+      margin-top: 2px;
+      font-family: var(--mono);
+    }
+
+    .peer-detail em {
+      font-style: normal;
+      color: var(--text);
+    }
+
+    a.download {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--teal);
+      text-decoration: none;
+      padding: 6px 12px;
+      border: 1px solid var(--teal-dim);
+      border-radius: var(--radius);
+      white-space: nowrap;
+    }
+
+    a.download:hover {
+      background: var(--teal-dim);
+      color: #b8ecec;
     }
 
     .empty {
       color: var(--muted);
-      padding: 40px 0;
+      font-size: 0.875rem;
+      padding: 24px 0;
+    }
+
+    .empty code {
+      font-family: var(--mono);
+      color: var(--teal);
+      font-size: 0.8125rem;
     }
 
     footer {
-      margin-top: 48px;
-      padding: 16px 32px;
+      margin-top: 40px;
+      padding-top: 16px;
       border-top: 1px solid var(--border);
+      font-size: 0.75rem;
       color: var(--muted);
-      font-size: 11px;
-    }
-
-    .instructions {
-      margin-bottom: 28px;
-      padding: 14px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-left: 3px solid var(--accent);
-      font-size: 13px;
-      line-height: 1.9;
-    }
-
-    .instructions ol { padding-left: 20px; }
-
-    .instructions code {
-      color: var(--accent);
-      background: #0a1a10;
-      padding: 1px 5px;
-    }
-
-    .count-badge {
-      margin-left: auto;
-      font-size: 11px;
-      color: var(--muted);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      padding: 2px 8px;
+      font-family: var(--mono);
     }
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <header>
+      <h1>Nitrox server</h1>
+      <p>Peer VPN configs and local server controls</p>
+    </header>
 
-<header>
-  <div>
-    <div class="logo">⬡ NITROX</div>
-    <div class="subtitle">Subnautica Dedicated Server — Peer Config Distribution</div>
-  </div>
-</header>
-
-<div class="notice">
-  <strong>⚠ LAN / VPN ONLY</strong> — This page has no authentication.
-  Never expose port 5000 to the public internet.
-  Connect to WireGuard VPN before downloading your config file.
-</div>
-
-<main>
-  <div class="instructions">
-    <strong>How to join:</strong>
-    <ol>
-      <li>Download your <code>.conf</code> file below (or scan the QR code on the server terminal).</li>
-      <li>Import the file into the <strong>WireGuard</strong> app on your device.</li>
-      <li>Activate the tunnel — your VPN IP will be shown in the app.</li>
-      <li>Connect Nitrox to <code>10.8.0.1:11000</code> in-game.</li>
-    </ol>
-  </div>
-
-  <h2 style="display:flex;align-items:center">
-    Peers
-    <span class="count-badge">{{ peers | length }} total</span>
-  </h2>
-
-  {% if peers %}
-  <div class="peer-grid">
-    {% for peer in peers %}
-    <div class="peer-card">
-      <div class="peer-name">{{ peer.name }}</div>
-      <div class="peer-meta">
-        VPN IP &nbsp;&nbsp;<span>{{ peer.vpn_ip }}</span><br />
-        Added &nbsp;&nbsp;&nbsp;<span>{{ peer.created_at[:10] if peer.created_at else '—' }}</span>
-      </div>
-      <a class="btn-download" href="/download/{{ peer.name }}">
-        ↓ download {{ peer.name }}.conf
-      </a>
+    <div class="banner">
+      <strong>LAN / VPN only.</strong> This page has no login. Do not expose port 5000 to the internet.
     </div>
-    {% endfor %}
-  </div>
-  {% else %}
-  <div class="empty">
-    No peers configured yet.<br />
-    Run <span style="color:var(--accent)">nitrox peer add &lt;name&gt;</span> on the server to add one.
-  </div>
-  {% endif %}
-</main>
 
-<footer>
-  nitrox · running on {{ request.host }} · {{ peers | length }} peer(s)
-</footer>
+    <section aria-labelledby="status-heading">
+      <div class="section-label" id="status-heading">Server status</div>
+      <div class="status-grid">
+        <div class="status-card">
+          <h3>WireGuard</h3>
+          <div class="status-row">
+            <span class="pill off" id="wg-pill">checking…</span>
+          </div>
+          <div class="status-meta" id="wg-meta"></div>
+        </div>
+        <div class="status-card">
+          <h3>Nitrox game server</h3>
+          <div class="status-row">
+            <span class="pill off" id="nitrox-pill">checking…</span>
+          </div>
+          <div class="status-meta" id="nitrox-meta"></div>
+          <div class="controls">
+            <button type="button" class="primary" id="btn-start">Start server</button>
+            <button type="button" class="danger" id="btn-stop">Stop server</button>
+          </div>
+          <div class="control-msg" id="control-msg" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
 
+    <section aria-labelledby="join-heading">
+      <div class="section-label" id="join-heading">How to join</div>
+      <ol class="steps">
+        <li>Download your <code>.conf</code> file below (or scan the QR on the server with <code>nitrox peer qr &lt;name&gt;</code>).</li>
+        <li>Import it into the WireGuard app and activate the tunnel.</li>
+        <li>In Subnautica, connect Nitrox to <code>10.8.0.1:11000</code>.</li>
+      </ol>
+    </section>
+
+    <section aria-labelledby="peers-heading">
+      <div class="peer-header">
+        <div class="section-label" id="peers-heading" style="margin:0">Peers</div>
+        <span class="count">{{ peers | length }} configured</span>
+      </div>
+
+      {% if peers %}
+      <div class="peer-list">
+        {% for peer in peers %}
+        <article class="peer-card">
+          <div>
+            <div class="peer-id">{{ peer.name }}</div>
+            <div class="peer-detail">
+              VPN <em>{{ peer.vpn_ip }}</em>
+              {% if peer.created_at %}
+              · added <em>{{ peer.created_at[:10] }}</em>
+              {% endif %}
+            </div>
+          </div>
+          <a class="download" href="/download/{{ peer.name }}">Download .conf</a>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p class="empty">
+        No peers yet. On the server run <code>sudo nitrox peer add &lt;name&gt;</code>.
+      </p>
+      {% endif %}
+    </section>
+
+    <footer>
+      {{ request.host }} · status refreshes every 10s
+    </footer>
+  </div>
+
+  <script>
+    const wgPill = document.getElementById("wg-pill");
+    const nitroxPill = document.getElementById("nitrox-pill");
+    const wgMeta = document.getElementById("wg-meta");
+    const nitroxMeta = document.getElementById("nitrox-meta");
+    const controlMsg = document.getElementById("control-msg");
+    const btnStart = document.getElementById("btn-start");
+    const btnStop = document.getElementById("btn-stop");
+
+    function setPill(el, running, labelOn, labelOff) {
+      el.className = "pill " + (running ? "on" : "off");
+      el.textContent = running ? labelOn : labelOff;
+    }
+
+    function applyStatus(data) {
+      setPill(wgPill, data.wireguard.running, "running", "stopped");
+      const ep = data.endpoint.host || "—";
+      wgMeta.innerHTML =
+        "Endpoint <span>" + ep + ":" + data.endpoint.port + "</span>" +
+        (data.peers.total
+          ? " · <span>" + data.peers.active + "/" + data.peers.total + "</span> peers online (≤3m)"
+          : "");
+
+      setPill(nitroxPill, data.nitrox.running, "running", "stopped");
+      let nitroxLine = "Game port <span>11000</span>";
+      if (data.nitrox.running && data.nitrox.uptime) {
+        nitroxLine += " · uptime <span>" + data.nitrox.uptime + "</span>";
+      }
+      nitroxMeta.innerHTML = nitroxLine;
+
+      btnStart.disabled = data.nitrox.running;
+      btnStop.disabled = !data.nitrox.running;
+    }
+
+    async function refreshStatus() {
+      try {
+        const res = await fetch("/api/status");
+        if (!res.ok) throw new Error("status " + res.status);
+        applyStatus(await res.json());
+      } catch (e) {
+        wgPill.className = "pill off";
+        wgPill.textContent = "unavailable";
+        nitroxPill.className = "pill off";
+        nitroxPill.textContent = "unavailable";
+      }
+    }
+
+    async function controlServer(action) {
+      controlMsg.className = "control-msg";
+      controlMsg.textContent = action === "start" ? "Starting…" : "Stopping…";
+      btnStart.disabled = true;
+      btnStop.disabled = true;
+
+      try {
+        const res = await fetch("/api/server/" + action, { method: "POST" });
+        const body = await res.json();
+        if (!body.ok) {
+          controlMsg.className = "control-msg err";
+          controlMsg.textContent = (body.error || "Request failed") +
+            (body.hint ? " — " + body.hint : "");
+        } else {
+          controlMsg.className = "control-msg ok";
+          controlMsg.textContent = "Server " + action + "ed.";
+        }
+        await refreshStatus();
+      } catch (e) {
+        controlMsg.className = "control-msg err";
+        controlMsg.textContent = "Could not reach the server API.";
+        await refreshStatus();
+      }
+    }
+
+    btnStart.addEventListener("click", () => controlServer("start"));
+    btnStop.addEventListener("click", () => controlServer("stop"));
+
+    refreshStatus();
+    setInterval(refreshStatus, 10000);
+  </script>
 </body>
 </html>

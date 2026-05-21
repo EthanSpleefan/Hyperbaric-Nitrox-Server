@@ -71,15 +71,10 @@ def _next_ip(peers: list) -> str:
     sys.exit(1)
 
 
-def _get_public_ip() -> str:
-    try:
-        r = subprocess.run(
-            ["curl", "-s", "--max-time", "5", "ifconfig.me"],
-            capture_output=True, text=True
-        )
-        return r.stdout.strip() or "unknown"
-    except Exception:
-        return "unknown"
+def _get_wireguard_endpoint() -> str:
+    from modules.endpoint import get_wireguard_endpoint
+
+    return get_wireguard_endpoint()
 
 
 def _require_root():
@@ -242,7 +237,7 @@ def add_peer(name: str):
     peer_privkey = key_path.read_text().strip()
     peer_pubkey = pub_path.read_text().strip()
     server_pubkey = SERVER_PUB.read_text().strip()
-    public_ip = _get_public_ip()
+    public_ip = _get_wireguard_endpoint()
 
     # Update wg0.conf and reload
     _append_peer_to_conf(name, peer_pubkey, vpn_ip)

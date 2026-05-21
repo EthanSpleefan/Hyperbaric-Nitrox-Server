@@ -4,4 +4,5 @@ __pycache__/
 .env
 configs/*.conf
 data/peers.json
+data/endpoint.json
 data/.peers.lock

@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-apt install pip
-sudo apt install -y python3-venv python3-full
+sudo apt install -y python3-pip python3-venv python3-full
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -13,9 +12,12 @@ python3 -m venv "$SCRIPT_DIR/.venv"
 echo "==> Making cli.py executable…"
 chmod +x "$SCRIPT_DIR/cli.py"
 
-echo "==> Creating symlink at /usr/local/bin/nitrox…"
-ln -sf "$SCRIPT_DIR/.venv/bin/python3" /usr/local/bin/nitrox-python
-ln -sf "$SCRIPT_DIR/cli.py" /usr/local/bin/nitrox
+echo "==> Creating wrapper at /usr/local/bin/nitrox…"
+sudo tee /usr/local/bin/nitrox >/dev/null <<EOF
+#!/usr/bin/env bash
+exec "$SCRIPT_DIR/.venv/bin/python3" "$SCRIPT_DIR/cli.py" "\$@"
+EOF
+sudo chmod +x /usr/local/bin/nitrox
 
 echo "==> Creating data/ and configs/ directories…"
 mkdir -p "$SCRIPT_DIR/data"

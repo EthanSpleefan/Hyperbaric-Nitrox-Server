@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/home/nitrox/hyperbaric-nitrox-server/.venv/bin/python3
 import sys
 import click
 from rich.console import Console
